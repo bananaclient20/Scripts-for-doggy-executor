@@ -1,85 +1,152 @@
+--[[
+99 Nocy w Lesie – Cheat GUI Script (KillAura REAL, bez teleportu)
+Autor: ChatGPT
+--]]
+
 local player = game.Players.LocalPlayer
-repeat wait() until player:FindFirstChild("PlayerGui")
-local character = player.Character or player.CharacterAdded:Wait()
+local uis = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local debris = game:GetService("Debris")
 
--- =========================
--- Infinite Jump
--- =========================
-local UIS = game:GetService("UserInputService")
-UIS.InputBegan:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
-end)
+-- SETTINGS
+local killAuraRange = 500
+local safeHeight = 50
+local jumpPower = 100
 
--- =========================
--- Kill Aura
--- =========================
+-- Lista mobów
 local hostile_mobs = {
-    "Wolf", "Alpha Wolf", "Bear", "Alpha Bear", "Polar Bear",
-    "Arctic Fox", "Scorpion", "Mammoth", "New Mammoth", "Owl",
-    "The Deer", "Deer Monster", "The Ram", "King Cultist",
-    "Cultist (melee)", "Cultist Archer", "Juggernaut Cultist",
-    "Alien", "Alien Elite", "Rabbit"
+    "Wolf","Alpha Wolf","Bear","Alpha Bear","Polar Bear","Arctic Fox",
+    "Scorpion","Mammoth","New Mammoth","Owl","The Deer","Deer Monster",
+    "The Ram","King Cultist","Cultist (melee)","Cultist Archer",
+    "Juggernaut Cultist","Alien","Alien Elite","Rabbit"
 }
 
-local range = 1000
+-- Lista broni/itemów
+local weapons = {
+    "Old Axe","Good Axe","Strong Axe","Ice Axe","Chainsaw","Spear","Poison Spear","Katana",
+    "Laser Sword","Ice Sword","Morningstar","Infernal Sword","Trident",
+    "Revolver","Rifle","Raygun","Flamethrower","Blowpipe","Wildfire","Crossbow",
+    "Tactical Shotgun","Ice Shuriken","Kunai",
+    "Torch","Bandage","Fuel Canister","Cooked Morsel","Cooked Meat",
+    "Admin Axe","Laser Cannon"
+}
 
-local function isHostileMob(mob)
-    for _, name in ipairs(hostile_mobs) do
-        if mob.Name == name then
-            return true
-        end
-    end
-    return false
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Night99CheatGUI"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = ScreenGui
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+local function createButton(text, parent)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 220, 0, 40)
+    btn.Position = UDim2.new(0, 15, 0, #parent:GetChildren() * 45)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.Parent = parent
+    return btn
 end
 
-game:GetService("RunService").Heartbeat:Connect(function()
-    if not character or not character.PrimaryPart then return end
-    for _, mob in ipairs(workspace:GetChildren()) do
-        if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and isHostileMob(mob) then
-            if mob.PrimaryPart then
-                local distance = (mob.PrimaryPart.Position - character.PrimaryPart.Position).magnitude
-                if distance < range then
-                    mob.Humanoid.Health = mob.Humanoid.Health - 10
+-- Toggle Variables
+local killAuraEnabled = false
+local autoSafeEnabled = false
+local infJumpEnabled = false
+local noclipEnabled = false
+
+-- Buttons
+local killAuraBtn = createButton("KillAura: OFF", mainFrame)
+local autoSafeBtn = createButton("AutoSafe: OFF", mainFrame)
+local infJumpBtn = createButton("Inf Jump: OFF", mainFrame)
+local noclipBtn = createButton("Noclip: OFF", mainFrame)
+
+-- Toggle Functions
+killAuraBtn.MouseButton1Click:Connect(function()
+    killAuraEnabled = not killAuraEnabled
+    killAuraBtn.Text = "KillAura: "..(killAuraEnabled and "ON" or "OFF")
+end)
+
+autoSafeBtn.MouseButton1Click:Connect(function()
+    autoSafeEnabled = not autoSafeEnabled
+    autoSafeBtn.Text = "AutoSafe: "..(autoSafeEnabled and "ON" or "OFF")
+end)
+
+infJumpBtn.MouseButton1Click:Connect(function()
+    infJumpEnabled = not infJumpEnabled
+    infJumpBtn.Text = "Inf Jump: "..(infJumpEnabled and "ON" or "OFF")
+end)
+
+noclipBtn.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    noclipBtn.Text = "Noclip: "..(noclipEnabled and "ON" or "OFF")
+end)
+
+-- Function to get tool from backpack or character
+local function getWeapon()
+    for _, toolName in pairs(weapons) do
+        local tool = player.Backpack:FindFirstChild(toolName) or player.Character:FindFirstChild(toolName)
+        if tool and tool:IsA("Tool") then
+            return tool
+        end
+    end
+    return nil
+end
+
+-- KillAura Logic
+runService.RenderStepped:Connect(function()
+    if killAuraEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local tool = getWeapon()
+        if tool then
+            tool.Parent = player.Character -- Equip tool
+            for _, mob in pairs(workspace:GetChildren()) do
+                if mob:FindFirstChild("Humanoid") and mob:FindFirstChild("HumanoidRootPart") then
+                    if table.find(hostile_mobs, mob.Name) then
+                        local dist = (mob.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                        if dist <= killAuraRange then
+                            -- Simulate attack
+                            if tool:FindFirstChild("Handle") then
+                                tool:Activate() -- real attack
+                            end
+                        end
+                    end
                 end
             end
         end
     end
 end)
 
--- =========================
--- Auto Safe
--- =========================
-local safeY = 100
-local hpThreshold = 20
-local safe = false
-
-local function teleportUp()
-    if character and character.PrimaryPart then
-        character:SetPrimaryPartCFrame(character.PrimaryPart.CFrame + Vector3.new(0, safeY, 0))
-        safe = true
+-- AutoSafe Logic
+runService.RenderStepped:Connect(function()
+    if autoSafeEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
+        local humanoid = player.Character.Humanoid
+        if humanoid.Health < humanoid.MaxHealth then
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(player.Character.HumanoidRootPart.Position.X, safeHeight, player.Character.HumanoidRootPart.Position.Z)
+        end
     end
-end
+end)
 
-local function teleportDown()
-    if character and character.PrimaryPart then
-        character:SetPrimaryPartCFrame(character.PrimaryPart.CFrame - Vector3.new(0, safeY, 0))
-        safe = false
+-- Infinite Jump
+uis.JumpRequest:Connect(function()
+    if infJumpEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
     end
-end
+end)
 
-spawn(function()
-    while true do
-        wait(0.2)
-        if character and character:FindFirstChild("Humanoid") then
-            local humanoid = character.Humanoid
-            if humanoid.Health < hpThreshold and not safe then
-                teleportUp()
-            elseif humanoid.Health == humanoid.MaxHealth and safe then
-                teleportDown()
+-- Noclip
+runService.Stepped:Connect(function()
+    if noclipEnabled and player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
             end
         end
     end
