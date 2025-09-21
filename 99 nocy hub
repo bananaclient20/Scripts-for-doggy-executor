@@ -1,19 +1,20 @@
 local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+repeat wait() until player:FindFirstChild("PlayerGui")
+local playerGui = player.PlayerGui
 
--- ScreenGui
+-- Tworzenie GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BananaGui"
+screenGui.ResetOnSpawn = false -- ważne dla executorów
 screenGui.Parent = playerGui
 
--- GŁÓWNA RAMKA
 local frame = Instance.new("Frame")
 frame.Parent = screenGui
 frame.Size = UDim2.new(0, 300, 0, 220)
-frame.Position = UDim2.new(0.5, -150, 0.15, 0)
+frame.Position = UDim2.new(0.5, -150, 0.2, 0)
 frame.BackgroundColor3 = Color3.fromRGB(250, 230, 120)
 frame.BorderSizePixel = 0
-frame.BackgroundTransparency = 0.1
+frame.BackgroundTransparency = 0 -- poprawione, żeby było widoczne
 frame.AnchorPoint = Vector2.new(0.5, 0)
 frame.Active = true
 
@@ -21,33 +22,32 @@ local uicorner = Instance.new("UICorner")
 uicorner.CornerRadius = UDim.new(0, 25)
 uicorner.Parent = frame
 
--- MOVABLE GUI
-local dragging
-local dragInput
-local dragStart
-local startPos
-
-local function update(input)
-    local delta = input.Position - dragStart
-    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
+-- Przesuwalne okno
+local UserInputService = game:GetService("UserInputService")
+local dragToggle, dragStart, startPos
 
 frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
+        dragToggle = true
         dragStart = input.Position
         startPos = frame.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+                dragToggle = false
             end
         end)
     end
 end)
 
 frame.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        update(input)
+    if dragToggle and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
@@ -111,6 +111,10 @@ autoSafeStatus.BackgroundTransparency = 1
 autoSafeStatus.TextScaled = true
 autoSafeStatus.TextColor3 = Color3.fromRGB(140, 110, 40)
 autoSafeStatus.Font = Enum.Font.FredokaOne
+
+-- ===========================
+-- TUTAJ ZOSTAWIAM TWÓJ CAŁY KOD KILL AURA I AUTO SAFE BEZ ZMIAN
+-- ===========================
 
 -- Kill Aura Script
 local hostile_mobs = {
