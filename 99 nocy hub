@@ -1,0 +1,182 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Utwórz GUI (ramka, tytuł itp. – jak w poprzednim przykładzie)
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BananaGui"
+screenGui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Parent = screenGui
+frame.Size = UDim2.new(0, 300, 0, 220)
+frame.Position = UDim2.new(0.5, -150, 0.1, 0)
+frame.BackgroundColor3 = Color3.fromRGB(250, 230, 120)
+frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.1
+frame.AnchorPoint = Vector2.new(0.5, 0)
+local uicorner = Instance.new("UICorner")
+uicorner.CornerRadius = UDim.new(0, 25)
+uicorner.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Parent = frame
+title.Text = "99 BANAN GUI"
+title.Size = UDim2.new(1, 0, 0.25, 0)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(255, 200, 60)
+title.Font = Enum.Font.FredokaOne
+
+-- Kill Aura Button
+local killAuraButton = Instance.new("TextButton")
+killAuraButton.Parent = frame
+killAuraButton.Text = "Włącz Kill Aurę"
+killAuraButton.Size = UDim2.new(0.8, 0, 0.18, 0)
+killAuraButton.Position = UDim2.new(0.1, 0, 0.28, 0)
+killAuraButton.BackgroundColor3 = Color3.fromRGB(255, 220, 90)
+killAuraButton.TextColor3 = Color3.fromRGB(80, 60, 20)
+killAuraButton.Font = Enum.Font.FredokaOne
+killAuraButton.TextScaled = true
+local uicornerBtn = Instance.new("UICorner")
+uicornerBtn.CornerRadius = UDim.new(0, 15)
+uicornerBtn.Parent = killAuraButton
+
+local killAuraStatus = Instance.new("TextLabel")
+killAuraStatus.Parent = frame
+killAuraStatus.Text = "Kill Aura: Wyłączona"
+killAuraStatus.Size = UDim2.new(1, 0, 0.13, 0)
+killAuraStatus.Position = UDim2.new(0, 0, 0.47, 0)
+killAuraStatus.BackgroundTransparency = 1
+killAuraStatus.TextScaled = true
+killAuraStatus.TextColor3 = Color3.fromRGB(140, 110, 40)
+killAuraStatus.Font = Enum.Font.FredokaOne
+
+-- Auto Safe Button
+local autoSafeButton = Instance.new("TextButton")
+autoSafeButton.Parent = frame
+autoSafeButton.Text = "Włącz Auto Safe"
+autoSafeButton.Size = UDim2.new(0.8, 0, 0.18, 0)
+autoSafeButton.Position = UDim2.new(0.1, 0, 0.61, 0)
+autoSafeButton.BackgroundColor3 = Color3.fromRGB(255, 220, 90)
+autoSafeButton.TextColor3 = Color3.fromRGB(80, 60, 20)
+autoSafeButton.Font = Enum.Font.FredokaOne
+autoSafeButton.TextScaled = true
+local uicornerBtn2 = Instance.new("UICorner")
+uicornerBtn2.CornerRadius = UDim.new(0, 15)
+uicornerBtn2.Parent = autoSafeButton
+
+local autoSafeStatus = Instance.new("TextLabel")
+autoSafeStatus.Parent = frame
+autoSafeStatus.Text = "Auto Safe: Wyłączony"
+autoSafeStatus.Size = UDim2.new(1, 0, 0.13, 0)
+autoSafeStatus.Position = UDim2.new(0, 0, 0.80, 0)
+autoSafeStatus.BackgroundTransparency = 1
+autoSafeStatus.TextScaled = true
+autoSafeStatus.TextColor3 = Color3.fromRGB(140, 110, 40)
+autoSafeStatus.Font = Enum.Font.FredokaOne
+
+-- Kill Aura Script
+local hostile_mobs = {
+    "Wolf", "Alpha Wolf", "Bear", "Alpha Bear", "Polar Bear",
+    "Arctic Fox", "Scorpion", "Mammoth", "New Mammoth", "Owl",
+    "The Deer", "Deer Monster", "The Ram", "King Cultist",
+    "Cultist (melee)", "Cultist Archer", "Juggernaut Cultist",
+    "Alien", "Alien Elite", "Rabbit"
+}
+local killAuraEnabled = false
+local range = 1000
+
+function isHostileMob(mob)
+    for _, mobName in ipairs(hostile_mobs) do
+        if mob.Name == mobName then
+            return true
+        end
+    end
+    return false
+end
+
+function killAura()
+    if not killAuraEnabled then return end
+    local character = player.Character
+    if not character or not character.PrimaryPart then return end
+    for _, mob in ipairs(workspace:GetChildren()) do
+        if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and isHostileMob(mob) then
+            if mob.PrimaryPart then
+                local distance = (mob.PrimaryPart.Position - character.PrimaryPart.Position).magnitude
+                if distance < range then
+                    mob.Humanoid.Health = mob.Humanoid.Health - 10
+                end
+            end
+        end
+    end
+end
+
+game:GetService("RunService").Heartbeat:Connect(killAura)
+
+killAuraButton.MouseButton1Click:Connect(function()
+    killAuraEnabled = not killAuraEnabled
+    if killAuraEnabled then
+        killAuraButton.Text = "Wyłącz Kill Aurę"
+        killAuraStatus.Text = "Kill Aura: Włączona"
+        killAuraStatus.TextColor3 = Color3.fromRGB(60, 180, 60)
+    else
+        killAuraButton.Text = "Włącz Kill Aurę"
+        killAuraStatus.Text = "Kill Aura: Wyłączona"
+        killAuraStatus.TextColor3 = Color3.fromRGB(140, 110, 40)
+    end
+end)
+
+-- Auto Safe Script
+local autoSafeEnabled = false
+local safeY = 100 -- wysokość teleportu
+local hpPróg = 20 -- poniżej tego HP aktywuje się auto safe
+local bezpieczny = false
+
+function teleportUp()
+    local character = player.Character
+    if character and character.PrimaryPart then
+        character:SetPrimaryPartCFrame(character.PrimaryPart.CFrame + Vector3.new(0, safeY, 0))
+        bezpieczny = true
+    end
+end
+
+function teleportDown()
+    local character = player.Character
+    if character and character.PrimaryPart then
+        character:SetPrimaryPartCFrame(character.PrimaryPart.CFrame - Vector3.new(0, safeY, 0))
+        bezpieczny = false
+    end
+end
+
+autoSafeButton.MouseButton1Click:Connect(function()
+    autoSafeEnabled = not autoSafeEnabled
+    if autoSafeEnabled then
+        autoSafeButton.Text = "Wyłącz Auto Safe"
+        autoSafeStatus.Text = "Auto Safe: Włączony"
+        autoSafeStatus.TextColor3 = Color3.fromRGB(60, 180, 60)
+    else
+        autoSafeButton.Text = "Włącz Auto Safe"
+        autoSafeStatus.Text = "Auto Safe: Wyłączony"
+        autoSafeStatus.TextColor3 = Color3.fromRGB(140, 110, 40)
+    end
+end)
+
+local function autoSafeMonitor()
+    while true do
+        wait(0.2)
+        if autoSafeEnabled then
+            local character = player.Character
+            if character and character:FindFirstChild("Humanoid") then
+                local humanoid = character.Humanoid
+                if humanoid.Health < hpPróg and not bezpieczny then
+                    teleportUp()
+                elseif humanoid.Health == humanoid.MaxHealth and bezpieczny then
+                    teleportDown()
+                end
+            end
+        end
+    end
+end
+
+spawn(autoSafeMonitor)
