@@ -1,35 +1,11 @@
 --[[
-99 Nocy w Lesie – Cheat GUI Script (KillAura REAL, bez teleportu)
+99 Nocy w Lesie – KillAura REAL + GUI
 Autor: ChatGPT
 --]]
 
 local player = game.Players.LocalPlayer
 local uis = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
-local debris = game:GetService("Debris")
-
--- SETTINGS
-local killAuraRange = 500
-local safeHeight = 50
-local jumpPower = 100
-
--- Lista mobów
-local hostile_mobs = {
-    "Wolf","Alpha Wolf","Bear","Alpha Bear","Polar Bear","Arctic Fox",
-    "Scorpion","Mammoth","New Mammoth","Owl","The Deer","Deer Monster",
-    "The Ram","King Cultist","Cultist (melee)","Cultist Archer",
-    "Juggernaut Cultist","Alien","Alien Elite","Rabbit"
-}
-
--- Lista broni/itemów
-local weapons = {
-    "Old Axe","Good Axe","Strong Axe","Ice Axe","Chainsaw","Spear","Poison Spear","Katana",
-    "Laser Sword","Ice Sword","Morningstar","Infernal Sword","Trident",
-    "Revolver","Rifle","Raygun","Flamethrower","Blowpipe","Wildfire","Crossbow",
-    "Tactical Shotgun","Ice Shuriken","Kunai",
-    "Torch","Bandage","Fuel Canister","Cooked Morsel","Cooked Meat",
-    "Admin Axe","Laser Cannon"
-}
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -90,30 +66,48 @@ noclipBtn.MouseButton1Click:Connect(function()
     noclipBtn.Text = "Noclip: "..(noclipEnabled and "ON" or "OFF")
 end)
 
--- Function to get tool from backpack or character
-local function getWeapon()
-    for _, toolName in pairs(weapons) do
-        local tool = player.Backpack:FindFirstChild(toolName) or player.Character:FindFirstChild(toolName)
-        if tool and tool:IsA("Tool") then
-            return tool
-        end
-    end
-    return nil
-end
-
--- KillAura Logic
+-- KillAura Logic (samowystarczalna)
 runService.RenderStepped:Connect(function()
     if killAuraEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local tool = getWeapon()
+
+        -- ZASIĘG w KillAurze
+        local killAuraRange = 500
+
+        -- Lista mobów w KillAurze
+        local hostile_mobs = {
+            "Wolf","Alpha Wolf","Bear","Alpha Bear","Polar Bear","Arctic Fox",
+            "Scorpion","Mammoth","New Mammoth","Owl","The Deer","Deer Monster",
+            "The Ram","King Cultist","Cultist (melee)","Cultist Archer",
+            "Juggernaut Cultist","Alien","Alien Elite","Rabbit"
+        }
+
+        -- Lista broni w KillAurze
+        local weapons = {
+            "Old Axe","Good Axe","Strong Axe","Ice Axe","Chainsaw","Spear","Poison Spear","Katana",
+            "Laser Sword","Ice Sword","Morningstar","Infernal Sword","Trident",
+            "Revolver","Rifle","Raygun","Flamethrower","Blowpipe","Wildfire","Crossbow",
+            "Tactical Shotgun","Ice Shuriken","Kunai",
+            "Torch","Bandage","Fuel Canister","Cooked Morsel","Cooked Meat",
+            "Admin Axe","Laser Cannon"
+        }
+
+        -- Wybór broni
+        local tool = nil
+        for _, itemName in pairs(weapons) do
+            tool = player.Backpack:FindFirstChild(itemName) or player.Character:FindFirstChild(itemName)
+            if tool and tool:IsA("Tool") then break end
+        end
+
         if tool then
             tool.Parent = player.Character -- Equip tool
+
+            -- Pętla po mobach
             for _, mob in pairs(workspace:GetChildren()) do
                 if mob:FindFirstChild("Humanoid") and mob:FindFirstChild("HumanoidRootPart") then
-                    if table.find(hostile_mobs, mob.Name) then
-                        local dist = (mob.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                        if dist <= killAuraRange then
-                            -- Simulate attack
-                            if tool:FindFirstChild("Handle") then
+                    for _, mobName in pairs(hostile_mobs) do
+                        if string.find(mob.Name, mobName) then
+                            local dist = (mob.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                            if dist <= killAuraRange then
                                 tool:Activate() -- real attack
                             end
                         end
@@ -124,12 +118,12 @@ runService.RenderStepped:Connect(function()
     end
 end)
 
--- AutoSafe Logic
+-- AutoSafe
 runService.RenderStepped:Connect(function()
     if autoSafeEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
         local humanoid = player.Character.Humanoid
         if humanoid.Health < humanoid.MaxHealth then
-            player.Character.HumanoidRootPart.CFrame = CFrame.new(player.Character.HumanoidRootPart.Position.X, safeHeight, player.Character.HumanoidRootPart.Position.Z)
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(player.Character.HumanoidRootPart.Position.X, 50, player.Character.HumanoidRootPart.Position.Z)
         end
     end
 end)
