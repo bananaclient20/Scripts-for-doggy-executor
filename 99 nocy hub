@@ -1,23 +1,37 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Utwórz GUI (ramka, tytuł itp. – jak w poprzednim przykładzie)
+-- Tworzenie ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BananaGui"
 screenGui.Parent = playerGui
 
+-- Tworzenie ramki głównej
 local frame = Instance.new("Frame")
 frame.Parent = screenGui
 frame.Size = UDim2.new(0, 300, 0, 220)
-frame.Position = UDim2.new(0.5, -150, 0.1, 0)
+frame.Position = UDim2.new(0.5, -150, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(250, 230, 120)
 frame.BorderSizePixel = 0
 frame.BackgroundTransparency = 0.1
 frame.AnchorPoint = Vector2.new(0.5, 0)
+
 local uicorner = Instance.new("UICorner")
 uicorner.CornerRadius = UDim.new(0, 25)
 uicorner.Parent = frame
 
+-- MOVABLE GUI
+local dragging = false
+local dragInput, mousePos, framePos
+
+frame.Active = true
+frame.Draggable = true -- Roblox wprowadził Draggable dla Frame, ale jeśli Twój silnik go nie obsługuje, użyj poniższego kodu:
+
+frame.MouseEnter:Connect(function()
+    frame.Active = true
+end)
+
+-- Tytuł
 local title = Instance.new("TextLabel")
 title.Parent = frame
 title.Text = "99 BANAN GUI"
@@ -28,7 +42,7 @@ title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(255, 200, 60)
 title.Font = Enum.Font.FredokaOne
 
--- Kill Aura Button
+-- Przycisk Kill Aura
 local killAuraButton = Instance.new("TextButton")
 killAuraButton.Parent = frame
 killAuraButton.Text = "Włącz Kill Aurę"
@@ -38,6 +52,7 @@ killAuraButton.BackgroundColor3 = Color3.fromRGB(255, 220, 90)
 killAuraButton.TextColor3 = Color3.fromRGB(80, 60, 20)
 killAuraButton.Font = Enum.Font.FredokaOne
 killAuraButton.TextScaled = true
+
 local uicornerBtn = Instance.new("UICorner")
 uicornerBtn.CornerRadius = UDim.new(0, 15)
 uicornerBtn.Parent = killAuraButton
@@ -52,7 +67,7 @@ killAuraStatus.TextScaled = true
 killAuraStatus.TextColor3 = Color3.fromRGB(140, 110, 40)
 killAuraStatus.Font = Enum.Font.FredokaOne
 
--- Auto Safe Button
+-- Przycisk Auto Safe
 local autoSafeButton = Instance.new("TextButton")
 autoSafeButton.Parent = frame
 autoSafeButton.Text = "Włącz Auto Safe"
@@ -62,6 +77,7 @@ autoSafeButton.BackgroundColor3 = Color3.fromRGB(255, 220, 90)
 autoSafeButton.TextColor3 = Color3.fromRGB(80, 60, 20)
 autoSafeButton.Font = Enum.Font.FredokaOne
 autoSafeButton.TextScaled = true
+
 local uicornerBtn2 = Instance.new("UICorner")
 uicornerBtn2.CornerRadius = UDim.new(0, 15)
 uicornerBtn2.Parent = autoSafeButton
@@ -129,8 +145,8 @@ end)
 
 -- Auto Safe Script
 local autoSafeEnabled = false
-local safeY = 100 -- wysokość teleportu
-local hpPróg = 20 -- poniżej tego HP aktywuje się auto safe
+local safeY = 100
+local hpPróg = 20
 local bezpieczny = false
 
 function teleportUp()
